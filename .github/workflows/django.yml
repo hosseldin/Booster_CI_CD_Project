@@ -1,33 +1,31 @@
-# This will be the files for the github actions
-
-name: Django CI/CD
+# This will be the file for the GitHub Actions workflow
+name: Build and Push a Docker Image  # The name of the workflow for easy identification
 
 # Trigger this workflow on push or pull request to the main branch
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]  # Triggers the workflow when there is a push to the 'master' branch
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]  # Triggers the workflow when there is a pull request to the 'master' branch
 
-# Define the jobs to run
+# Define the jobs to run in the workflow
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
+  build-and-push:  # The name or type of the job
+    runs-on: ubuntu-latest  # The job will run on the latest available Ubuntu runner environment
 
-    steps:
+    steps:  # List of steps to be executed in the job
     - name: Checkout code
-      uses: actions/checkout@v3  # Pulls down your code to the runner
+      uses: actions/checkout@v3  # Checks out the code from the repository to the runner, so it can be used in the next steps
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3  # Logs into Docker Hub to authenticate and push images
       with:
-        python-version: '3.10'  # Define the Python version to use
+        username: ${{ secrets.DOCKER_USERNAME }}  # Fetches the Docker Hub username from GitHub secrets
+        password: ${{ secrets.DOCKER_PASSWORD }}  # Fetches the Docker Hub password from GitHub secrets
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+    - name: Build Docker Image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/booster-app:latest .  # Builds the Docker image using the Dockerfile in the repository. The image is tagged with the Docker Hub username and "booster-app:latest".
 
-    - name: Run Django tests
-      run: |
-        python manage.py test  # Run Django tests
+    - name: Push Docker Image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/booster-app:latest  # Pushes the built Docker image to Docker Hub with the tag "latest"
+
